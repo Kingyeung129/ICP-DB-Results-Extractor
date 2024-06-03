@@ -16,7 +16,7 @@ This script is written and tested in Python version 3.12. Please install this ve
 
 ## Running the script
 
-<pre><code>python script.py</code></pre>
+<pre><code>python script.py -f {Target file path of Microsoft Access Database to extract data from}</code></pre>
 
 ## Developments
 
