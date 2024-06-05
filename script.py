@@ -1,8 +1,16 @@
 import argparse
+import logging
 import os
 import shutil
 
+import pandas as pd
 import pyodbc
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.FileHandler("debug.log"), logging.StreamHandler()],
+)
 
 
 def duplicateDatabaseFile(fp):
@@ -15,20 +23,28 @@ def openDatabase(fp):
         f"Driver={{Microsoft Access Driver (*.mdb, *.accdb)}};DBQ={fp};",
         autocommit=True,  # Required to bypass MaxLocksPerFile
     )
-    # for table in conn.cursor().tables():
-    #     table_name = table.table_name
-    #     # print(table_name)
     return conn
 
 
-def drop_xinsha_result_indexes(conn):
+def getBaseViewTable(conn):
+    df = pd.read_sql("SELECT * FROM Results", con=conn)
+    df.drop(columns=["LockedBy", "Version", "Signature"], inplace=True)
+    return df
+
+
+def dropXinshaResultIndexes(conn, additional_result_indexes=[]):
     cursor = conn.cursor()
     cursor.execute(
         "SELECT ResultIndex FROM Results WHERE Description LIKE '%x%' OR Description LIKE '%X%'"
     )
     result_indexes = [row.ResultIndex for row in cursor.fetchall()]
+    # This will further filter out additional result indexes defined in optional argument.
+    result_indexes.extend(additional_result_indexes)
+    result_indexes = list(dict.fromkeys(result_indexes))  # Remove duplicates
     result_indexes_tuples = [(result_index,) for result_index in result_indexes]
-    print(f"All Xinsha result indexes (total {len(result_indexes)}): {result_indexes}")
+    logging.debug(
+        f"All Xinsha result indexes (total {len(result_indexes)}): {result_indexes}"
+    )
     table_list = [
         "Batch",
         "Ccstds",
@@ -46,7 +62,7 @@ def drop_xinsha_result_indexes(conn):
     ]
     batch_size = 100
     for table in table_list:
-        print(f"Deleting Xinsha result indexes from {table}...")
+        logging.debug(f"Deleting Xinsha result indexes from {table}...")
         for i in range(0, len(result_indexes_tuples), batch_size):
             batch = result_indexes_tuples[i : i + batch_size]
             cursor.executemany(f"DELETE FROM {table} WHERE ResultIndex = ?", batch)
@@ -54,7 +70,6 @@ def drop_xinsha_result_indexes(conn):
 
 
 def main():
-
     # Parse Script Arguments
     parser = argparse.ArgumentParser(
         description="Filter Xinsha tests by job reference in description and extract all other ICP test results. Script will look for 'X' in description field in results table."
@@ -70,19 +85,21 @@ def main():
     # Check if file path exists and test opening database connection
     fp = args.filepath
     if not os.path.exists(fp):
-        print("ICP Results database file path does not exist! Please check file path.")
+        logging.debug(
+            "ICP Results database file path does not exist! Please check file path."
+        )
         return
     fp = duplicateDatabaseFile(fp)
     try:
         conn = openDatabase(fp)
     except Exception as e:
-        print(e)
+        logging.debug(e)
         return
 
     # Drop result index for xinsha records
-    status = drop_xinsha_result_indexes(conn)
+    status = dropXinshaResultIndexes(conn)
     if status:
-        print(
+        logging.debug(
             f"Access Database filtered and extracted successfully. Extracted database file path is: {fp}"
         )
     return
