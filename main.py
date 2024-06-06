@@ -1,11 +1,9 @@
+import configparser
 import logging
 import os
 import subprocess
-import time
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
-
-import pandas as pd
 
 import script
 
@@ -15,6 +13,11 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[logging.FileHandler("debug.log"), logging.StreamHandler()],
 )
+
+# Intialize config parser
+config = configparser.ConfigParser()
+config.read("config.ini")
+initial_dir = config.get("Settings", "ICP_DB_FOLDER_PATH", fallback=os.getcwd())
 
 # Initialize global variables
 db_file_path = None
@@ -100,14 +103,22 @@ treescrolly.pack(side="right", fill="y")
 def openFileDialog():
     """Open File dialog for user to choose database file"""
     global db_file_path
+    global initial_dir
     db_file_path = filedialog.askopenfilename(
-        initialdir="C:\\Users\\admin\\Desktop\\ICP DB Results Extraction\\ICP DB Results Extractor",
+        initialdir=initial_dir,
         title="Select ICP Results Database File",
         filetype=(("Microsoft Access Database Files", "*.mdb"), ("All Files", "*.*")),
     )
     if db_file_path:
         logging.debug(f"File dialog selected file name: {db_file_path}")
         lbl_file["text"] = db_file_path
+        # Write to config parser
+        try:
+            config["Settings"]["ICP_DB_FOLDER_PATH"] = os.path.dirname(db_file_path)
+            with open("config.ini", "w") as f:
+                config.write(f)
+        except Exception as e:
+            logging.debug(e)
         return db_file_path
     return
 
