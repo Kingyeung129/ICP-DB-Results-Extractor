@@ -18,6 +18,10 @@ This script is written and tested in Python version 3.12. Please install this ve
 
 <pre><code>python script.py -f {Target file path of Microsoft Access Database to extract data from}</code></pre>
 
+## Graphical User Interface (GUI)
+
+A graphical user interface has been developed using python tkinter library. Code has been compiled using auto-py-to-exe into an windows executable. Do note that GUI is only supported for Windows OS platform.
+
 ## Developments
 
 This script will be compiled as an executable or rewritten in batch or powershell for compatibility.
