@@ -89,6 +89,17 @@ lbl_data_selected = ttk.Label(
     frm_selected_data, textvariable=v_selected_indexes, wraplength=450
 )
 lbl_data_selected.place(rely=0, relx=0)
+lbl_note = ttk.Label(
+    root,
+    text="""
+    (Note: All Xinsha results (with pattern 'X-' in description) will be removed by default.
+    The selected indexes are additional results to be removed in output database.)
+    """,
+    font=("TkSmallCaptionFont", 7),
+    wraplength=450,
+    padding=0,
+)
+lbl_note.place(x=10, y=550)
 
 # Treeview Widget
 tv = ttk.Treeview(frm_dataview)
@@ -157,7 +168,10 @@ def loadDataToTreeView(db_file_path):
         logging.error(e)
         tk.messagebox.showerror(
             "Error",
-            f"Database connection error or unexpected error. Please check if database is opened or locked for editing. Otherwise report the error to developer",
+            """
+            Database connection error or unexpected error.
+            Please check if database is opened or locked for editing. Otherwise report the error to developer
+            """,
         )
     # Parsing dataframe to tkinter's treeview
     tv["column"] = list(df.columns)
@@ -180,7 +194,9 @@ def confirmAction():
         )
         message = messagebox.showerror(
             "Error!",
-            "No database file or existing database connection. Plase browse and choose database file before proceeding.",
+            """
+            No database file or existing database connection. Plase browse and choose database file before proceeding.
+            """,
         )
         return
     message = messagebox.askquestion("Please confirm", "Confirm to proceed?")
@@ -231,6 +247,7 @@ def clearTreeView():
 
 def getSelectItemsFromTreeView():
     """Get selected items from tree view and assign the selected result indexes as global var"""
+    global selected_result_indexes
     selected_items = tv.selection()
     selected_result_indexes = [tv.item(i)["values"][0] for i in selected_items]
     logging.debug(f"User selected result indexes: {selected_result_indexes}")

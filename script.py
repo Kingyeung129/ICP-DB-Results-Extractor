@@ -38,13 +38,17 @@ def dropXinshaResultIndexes(conn, additional_result_indexes=[]):
         "SELECT ResultIndex FROM Results WHERE Description LIKE '%x-%' OR Description LIKE '%X-%'"
     )
     result_indexes = [row.ResultIndex for row in cursor.fetchall()]
-    # This will further filter out additional result indexes defined in optional argument.
-    result_indexes.extend(additional_result_indexes)
-    result_indexes = list(dict.fromkeys(result_indexes))  # Remove duplicates
-    result_indexes_tuples = [(result_index,) for result_index in result_indexes]
     logging.debug(
         f"All Xinsha result indexes (total {len(result_indexes)}): {result_indexes}"
     )
+    # This will further filter out additional result indexes defined in optional argument.
+    if additional_result_indexes:
+        result_indexes.extend(additional_result_indexes)
+        result_indexes = list(dict.fromkeys(result_indexes))  # Remove duplicates
+        logging.debug(
+            f"All result indexes to be removed (total {len(result_indexes)}): {result_indexes}"
+        )
+    result_indexes_tuples = [(result_index,) for result_index in result_indexes]
     table_list = [
         "Batch",
         "Ccstds",
@@ -72,7 +76,10 @@ def dropXinshaResultIndexes(conn, additional_result_indexes=[]):
 def main():
     # Parse Script Arguments
     parser = argparse.ArgumentParser(
-        description="Filter Xinsha tests by job reference in description and extract all other ICP test results. Script will look for 'X' in description field in results table."
+        description="""
+        Filter Xinsha tests by job reference in description and extract all other ICP test results.
+        Script will look for 'X' in description field in results table.
+        """
     )
     parser.add_argument(
         "-f",
