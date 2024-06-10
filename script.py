@@ -35,7 +35,7 @@ def getBaseViewTable(conn):
 def dropXinshaResultIndexes(conn, additional_result_indexes=[]):
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT ResultIndex FROM Results WHERE Description LIKE '%x%' OR Description LIKE '%X%'"
+        "SELECT ResultIndex FROM Results WHERE Description LIKE '%x-%' OR Description LIKE '%X-%'"
     )
     result_indexes = [row.ResultIndex for row in cursor.fetchall()]
     # This will further filter out additional result indexes defined in optional argument.
